@@ -15,6 +15,8 @@ namespace _1121538_徐霈綺_多媒體撥放器
     {
         private string currentFilePath = "";
         private MediaElement wpfMediaElement;
+        private Timer updateTimer;
+        private bool isDragging = false;
 
         public Form1()
         {
@@ -27,7 +29,28 @@ namespace _1121538_徐霈綺_多媒體撥放器
             wpfMediaElement = new MediaElement();
             wpfMediaElement.LoadedBehavior = MediaState.Manual;
             wpfMediaElement.UnloadedBehavior = MediaState.Stop;
+            wpfMediaElement.MediaOpened += WpfMediaElement_MediaOpened;
             videoPanel.Child = wpfMediaElement;
+
+            updateTimer = new Timer();
+            updateTimer.Interval = 500;
+            updateTimer.Tick += UpdateTimer_Tick;
+        }
+
+        private void WpfMediaElement_MediaOpened(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (wpfMediaElement.NaturalDuration.HasTimeSpan)
+            {
+                trackBarProgress.Maximum = (int)wpfMediaElement.NaturalDuration.TimeSpan.TotalSeconds;
+            }
+        }
+
+        private void UpdateTimer_Tick(object sender, EventArgs e)
+        {
+            if (!isDragging && wpfMediaElement != null && wpfMediaElement.NaturalDuration.HasTimeSpan)
+            {
+                trackBarProgress.Value = (int)wpfMediaElement.Position.TotalSeconds;
+            }
         }
 
         private void btnOpen_Click(object sender, EventArgs e)
@@ -54,6 +77,7 @@ namespace _1121538_徐霈綺_多媒體撥放器
             if (string.IsNullOrEmpty(currentFilePath)) return;
 
             wpfMediaElement.Play();
+            updateTimer.Start();
 
             lblStatus.Text = "正在播放: " + System.IO.Path.GetFileName(currentFilePath);
         }
@@ -73,6 +97,29 @@ namespace _1121538_徐霈綺_多媒體撥放器
             {
                 wpfMediaElement.Stop();
             }
+            if (updateTimer != null)
+            {
+                updateTimer.Stop();
+                trackBarProgress.Value = 0;
+            }
+        }
+
+        private void trackBarProgress_Scroll(object sender, EventArgs e)
+        {
+            if (wpfMediaElement != null && wpfMediaElement.NaturalDuration.HasTimeSpan)
+            {
+                wpfMediaElement.Position = TimeSpan.FromSeconds(trackBarProgress.Value);
+            }
+        }
+
+        private void trackBarProgress_MouseDown(object sender, MouseEventArgs e)
+        {
+            isDragging = true;
+        }
+
+        private void trackBarProgress_MouseUp(object sender, MouseEventArgs e)
+        {
+            isDragging = false;
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
