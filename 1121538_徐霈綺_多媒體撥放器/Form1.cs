@@ -17,6 +17,7 @@ namespace _1121538_徐霈綺_多媒體撥放器
         private MediaElement wpfMediaElement;
         private Timer updateTimer;
         private bool isDragging = false;
+        private bool isPlaying = false;
 
         public Form1()
         {
@@ -68,6 +69,8 @@ namespace _1121538_徐霈綺_多媒體撥放器
                     lblStatus.Text = "已選擇: " + System.IO.Path.GetFileName(currentFilePath);
                     btnPlay.Enabled = true;
                     btnStop.Enabled = true;
+                    btnReplay.Enabled = true;
+                    btnPlay.Text = "▶";
                 }
             }
         }
@@ -76,10 +79,21 @@ namespace _1121538_徐霈綺_多媒體撥放器
         {
             if (string.IsNullOrEmpty(currentFilePath)) return;
 
-            wpfMediaElement.Play();
-            updateTimer.Start();
-
-            lblStatus.Text = "正在播放: " + System.IO.Path.GetFileName(currentFilePath);
+            if (isPlaying)
+            {
+                wpfMediaElement.Pause();
+                isPlaying = false;
+                btnPlay.Text = "▶";
+                lblStatus.Text = "已暫停: " + System.IO.Path.GetFileName(currentFilePath);
+            }
+            else
+            {
+                wpfMediaElement.Play();
+                updateTimer.Start();
+                isPlaying = true;
+                btnPlay.Text = "⏸";
+                lblStatus.Text = "正在播放: " + System.IO.Path.GetFileName(currentFilePath);
+            }
         }
 
         private void btnStop_Click(object sender, EventArgs e)
@@ -89,6 +103,18 @@ namespace _1121538_徐霈綺_多媒體撥放器
             {
                 lblStatus.Text = "已停止: " + System.IO.Path.GetFileName(currentFilePath);
             }
+        }
+
+        private void btnReplay_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(currentFilePath)) return;
+
+            wpfMediaElement.Position = TimeSpan.Zero;
+            wpfMediaElement.Play();
+            updateTimer.Start();
+            isPlaying = true;
+            btnPlay.Text = "⏸";
+            lblStatus.Text = "重新播放: " + System.IO.Path.GetFileName(currentFilePath);
         }
 
         private void StopMedia()
@@ -102,6 +128,8 @@ namespace _1121538_徐霈綺_多媒體撥放器
                 updateTimer.Stop();
                 trackBarProgress.Value = 0;
             }
+            isPlaying = false;
+            btnPlay.Text = "▶";
         }
 
         private void trackBarProgress_Scroll(object sender, EventArgs e)
